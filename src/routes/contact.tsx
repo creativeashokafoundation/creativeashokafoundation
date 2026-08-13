@@ -3,7 +3,7 @@ import { PageHero } from "@/components/site/Layout";
 import { toast } from "sonner";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin, Phone, Mail, Clock, Instagram, Facebook } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Instagram, Facebook, Linkedin } from "lucide-react";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -57,6 +57,7 @@ function Contact() {
               {[
                 { I: Instagram, href: "https://www.instagram.com/creativeashoka/", label: "Instagram" },
                 { I: Facebook, href: "https://www.facebook.com/CreativeAshoka/", label: "Facebook" },
+                { I: Linkedin, href: "https://www.linkedin.com/company/creative-ashoka-foundation/posts/?feedView=all", label: "LinkedIn" },
               ].map(({ I, href, label }) => (
                 <a key={label} href={href} aria-label={label} target="_blank" rel="noopener noreferrer" className="rounded-full border border-border p-2 text-foreground/70 hover:text-accent"><I className="h-4 w-4" /></a>
               ))}

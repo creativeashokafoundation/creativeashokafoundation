@@ -30,6 +30,7 @@ export function Footer() {
           <div className="mt-5 flex items-center gap-3">
             <a aria-label="Instagram" href="https://www.instagram.com/creativeashoka/" className="rounded-full border border-border p-2 text-foreground/70 hover:text-accent"><Instagram className="h-4 w-4" /></a>
             <a aria-label="Facebook" href="https://www.facebook.com/CreativeAshoka/" className="rounded-full border border-border p-2 text-foreground/70 hover:text-accent"><Facebook className="h-4 w-4" /></a>
+            <a aria-label="LinkedIn" href="https://www.linkedin.com/company/creative-ashoka-foundation/posts/?feedView=all" target="_blank" rel="noopener noreferrer" className="rounded-full border border-border p-2 text-foreground/70 hover:text-accent"><Linkedin className="h-4 w-4" /></a>
           </div>
         </div>
 
