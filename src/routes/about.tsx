@@ -31,7 +31,7 @@ const leaders = [
   { name: "Dibyansh Rao", role: "Founder", bio: "Leads the vision and strategic direction of Creative Ashoka Foundation, driving initiatives that create meaningful and sustainable social impact in communities.", img: dibyanshAsset.url },
   { name: "Saurabh Singh", role: "Co-Founder", bio: "Supports organizational growth and development while helping strengthen community outreach, partnerships, and foundation initiatives.", img: saurabhAsset.url },
   { name: "Animesh Mishra", role: "Secretary", bio: "Oversees coordination, administration, and operational activities to ensure the smooth execution of programs and organizational objectives.", img: animeshAsset.url },
-  { name: "Prashant Pandey", role: "UDAAN Coordinator", bio: "Leads the UDAAN Education Support Program, working closely with volunteers and beneficiaries to expand educational opportunities for children and youth.", img: prashantAsset.url },
+  { name: "Prashant Pandey", role: "PROJECT COORDINATOR", bio: "Leads the project and support programs,works closely with volunteers and beneficiaries to expand educational opportunities for children and youth.", img: prashantAsset.url },
 ];
 
 
