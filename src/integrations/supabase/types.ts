@@ -109,6 +109,7 @@ export type Database = {
           donor_name: string
           email: string
           id: string
+          is_anonymous: boolean
           message: string | null
           pan: string | null
           payment_method: string | null
@@ -124,6 +125,7 @@ export type Database = {
           donor_name: string
           email: string
           id?: string
+          is_anonymous?: boolean
           message?: string | null
           pan?: string | null
           payment_method?: string | null
@@ -139,6 +141,7 @@ export type Database = {
           donor_name?: string
           email?: string
           id?: string
+          is_anonymous?: boolean
           message?: string | null
           pan?: string | null
           payment_method?: string | null
