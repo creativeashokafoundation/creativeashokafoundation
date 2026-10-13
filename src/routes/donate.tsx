@@ -1,23 +1,138 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useState, type FormEvent } from "react";
 import { PageHero } from "@/components/site/Layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { createDonationOrder, verifyDonationPayment } from "@/lib/razorpay.functions";
 import { toast } from "sonner";
-import { Building2, QrCode, Copy } from "lucide-react";
+import { Building2, QrCode, Copy, Heart, LockKeyhole } from "lucide-react";
 const qrAsset = { url: "/images/caf-upi-qr.jpeg" };
+
+type CheckoutSuccess = { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string };
+type CheckoutFailure = { error?: { description?: string } };
+
+type RazorpayOptions = {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  prefill: { name: string; email: string; contact: string };
+  theme: { color: string };
+  handler: (response: CheckoutSuccess) => void;
+  modal: { ondismiss: () => void };
+};
+
+declare global {
+  interface Window {
+    Razorpay?: new (options: RazorpayOptions) => {
+      open: () => void;
+      on: (event: "payment.failed", callback: (response: CheckoutFailure) => void) => void;
+    };
+  }
+}
 
 export const Route = createFileRoute("/donate")({
   head: () => ({
     meta: [
       { title: "Donate — Creative Ashoka Foundation" },
-      { name: "description", content: "Donate via bank transfer or QR code. 80G tax-exempt. 100% of your contribution funds on-ground programs." },
+      { name: "description", content: "Donate securely through Razorpay, UPI QR code, or bank transfer. Support Creative Ashoka Foundation's on-ground programs." },
       { property: "og:title", content: "Donate to Creative Ashoka Foundation" },
       { property: "og:description", content: "Your contribution funds meals, scholarships and lifesaving care. 80G certified." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Donate,
 });
 
 function Donate() {
+  const createOrder = useServerFn(createDonationOrder);
+  const verifyPayment = useServerFn(verifyDonationPayment);
+  const [amount, setAmount] = useState("500");
+  const [donorName, setDonorName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [pan, setPan] = useState("");
+  const [cause, setCause] = useState("General donation");
+  const [isPaying, setIsPaying] = useState(false);
+  const [paymentComplete, setPaymentComplete] = useState(false);
+
   const copy = (t: string) => { navigator.clipboard.writeText(t); toast.success("Copied"); };
+
+  const loadCheckout = async () => {
+    if (window.Razorpay) return;
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error("Could not load secure payment checkout."));
+      document.body.appendChild(script);
+    });
+  };
+
+  const handleDonate = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const parsedAmount = Number(amount);
+    if (!Number.isSafeInteger(parsedAmount) || parsedAmount < 1) {
+      toast.error("Enter a valid donation amount in rupees.");
+      return;
+    }
+
+    setIsPaying(true);
+    try {
+      await loadCheckout();
+      const order = await createOrder({ data: {
+        donorName,
+        email,
+        phone,
+        amount: parsedAmount,
+        cause,
+        pan,
+      } });
+      if (!window.Razorpay) throw new Error("Secure payment checkout is unavailable. Please try again.");
+
+      const checkout = new window.Razorpay({
+        key: order.keyId,
+        amount: order.amount,
+        currency: order.currency,
+        name: "Creative Ashoka Foundation",
+        description: "Charitable donation",
+        order_id: order.orderId,
+        prefill: { name: order.donorName, email: order.email, contact: order.phone },
+        theme: { color: "#1F4E79" },
+        modal: { ondismiss: () => setIsPaying(false) },
+        handler: async (response) => {
+          try {
+            await verifyPayment({ data: {
+              donationId: order.donationId,
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+            } });
+            setPaymentComplete(true);
+            toast.success("Thank you — your donation was confirmed.");
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Payment verification failed. Please contact us.");
+          } finally {
+            setIsPaying(false);
+          }
+        },
+      });
+      checkout.on("payment.failed", (response) => {
+        setIsPaying(false);
+        toast.error(response.error?.description || "Payment was not completed. Please try again.");
+      });
+      checkout.open();
+    } catch (error) {
+      setIsPaying(false);
+      toast.error(error instanceof Error ? error.message : "Could not start payment. Please try again.");
+    }
+  };
 
   return (
     <>
@@ -25,6 +140,74 @@ function Donate() {
 
       <section className="section-y">
         <div className="container-page grid gap-10 lg:grid-cols-2">
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-soft md:p-8">
+            <div className="flex items-center gap-2 text-accent">
+              <Heart className="h-5 w-5" />
+              <h3 className="font-display font-semibold text-primary">Donate securely</h3>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">Choose an amount and make your contribution through Razorpay.</p>
+            {paymentComplete ? (
+              <div className="mt-6 border-l-2 border-accent py-2 pl-4" role="status">
+                <p className="font-semibold text-primary">Thank you for your generosity.</p>
+                <p className="mt-1 text-sm text-muted-foreground">Your payment is confirmed. Your contribution supports our on-ground programs.</p>
+              </div>
+            ) : (
+              <form className="mt-6 space-y-5" onSubmit={handleDonate}>
+                <fieldset>
+                  <legend className="mb-2 text-sm font-medium">Choose an amount</legend>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[500, 1000, 2500].map((value) => (
+                      <Button key={value} type="button" variant={amount === String(value) ? "default" : "outline"} className="px-2" onClick={() => setAmount(String(value))}>
+                        ₹{value.toLocaleString("en-IN")}
+                      </Button>
+                    ))}
+                    <Button type="button" variant={!["500", "1000", "2500"].includes(amount) ? "default" : "outline"} className="px-2" onClick={() => setAmount("")}>Other</Button>
+                  </div>
+                </fieldset>
+                <div className="space-y-2">
+                  <Label htmlFor="donation-amount">Amount (₹)</Label>
+                  <Input id="donation-amount" type="number" min="1" max="1000000" step="1" required value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="Enter an amount" />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="donor-name">Full name</Label>
+                    <Input id="donor-name" autoComplete="name" required maxLength={200} value={donorName} onChange={(event) => setDonorName(event.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="donor-email">Email address</Label>
+                    <Input id="donor-email" type="email" autoComplete="email" required maxLength={320} value={email} onChange={(event) => setEmail(event.target.value)} />
+                  </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="donor-phone">Phone number</Label>
+                    <Input id="donor-phone" type="tel" autoComplete="tel" maxLength={40} value={phone} onChange={(event) => setPhone(event.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="donor-pan">PAN (optional)</Label>
+                    <Input id="donor-pan" autoCapitalize="characters" maxLength={20} value={pan} onChange={(event) => setPan(event.target.value.toUpperCase())} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="donation-cause">Support a program</Label>
+                  <select id="donation-cause" value={cause} onChange={(event) => setCause(event.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                    <option>General donation</option>
+                    <option>UDAAN</option>
+                    <option>SWABHIMAAN</option>
+                    <option>ANN SE ASHIRWAD</option>
+                    <option>HAR JEEVAN ANMOL</option>
+                    <option>VASUNDHARA</option>
+                  </select>
+                </div>
+                <Button type="submit" className="w-full" size="lg" disabled={isPaying}>
+                  <LockKeyhole className="h-4 w-4" />
+                  {isPaying ? "Preparing secure payment…" : `Donate ₹${(Number(amount) || 0).toLocaleString("en-IN")}`}
+                </Button>
+                <p className="text-center text-xs text-muted-foreground">Your payment is processed securely by Razorpay.</p>
+              </form>
+            )}
+          </div>
+
           <div className="rounded-3xl border border-border bg-card p-6 shadow-soft md:p-8">
             <div className="flex items-center gap-2 text-accent">
               <Building2 className="h-5 w-5" />
