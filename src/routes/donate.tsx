@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState, type FormEvent } from "react";
 import { PageHero } from "@/components/site/Layout";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createDonationOrder, verifyDonationPayment } from "@/lib/razorpay.functions";
@@ -56,6 +57,7 @@ function Donate() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [pan, setPan] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [cause, setCause] = useState("General donation");
   const [isPaying, setIsPaying] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
@@ -90,6 +92,7 @@ function Donate() {
         amount: parsedAmount,
         cause,
         pan,
+        isAnonymous,
       } });
       if (!window.Razorpay) throw new Error("Secure payment checkout is unavailable. Please try again.");
 
@@ -165,26 +168,50 @@ function Donate() {
                   <Label htmlFor="donation-amount">Amount (₹)</Label>
                   <Input id="donation-amount" type="number" min="1" max="1000000" step="1" required value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="Enter an amount" />
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="donor-name">Full name</Label>
-                    <Input id="donor-name" autoComplete="name" required maxLength={200} value={donorName} onChange={(event) => setDonorName(event.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="donor-email">Email address</Label>
-                    <Input id="donor-email" type="email" autoComplete="email" required maxLength={320} value={email} onChange={(event) => setEmail(event.target.value)} />
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="donation-anonymous"
+                    checked={isAnonymous}
+                    onCheckedChange={(checked) => {
+                      const anonymous = checked === true;
+                      setIsAnonymous(anonymous);
+                      if (anonymous) {
+                        setDonorName("");
+                        setEmail("");
+                        setPhone("");
+                        setPan("");
+                      }
+                    }}
+                  />
+                  <div className="space-y-1">
+                    <Label htmlFor="donation-anonymous" className="cursor-pointer">Make this an anonymous donation</Label>
+                    <p className="text-xs text-muted-foreground">Your name and contact details won’t be saved with this donation.</p>
                   </div>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="donor-phone">Phone number</Label>
-                    <Input id="donor-phone" type="tel" autoComplete="tel" maxLength={40} value={phone} onChange={(event) => setPhone(event.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="donor-pan">PAN (optional)</Label>
-                    <Input id="donor-pan" autoCapitalize="characters" maxLength={20} value={pan} onChange={(event) => setPan(event.target.value.toUpperCase())} />
-                  </div>
-                </div>
+                {!isAnonymous && (
+                  <>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="donor-name">Full name</Label>
+                        <Input id="donor-name" autoComplete="name" required maxLength={200} value={donorName} onChange={(event) => setDonorName(event.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="donor-email">Email address</Label>
+                        <Input id="donor-email" type="email" autoComplete="email" required maxLength={320} value={email} onChange={(event) => setEmail(event.target.value)} />
+                      </div>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="donor-phone">Phone number</Label>
+                        <Input id="donor-phone" type="tel" autoComplete="tel" maxLength={40} value={phone} onChange={(event) => setPhone(event.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="donor-pan">PAN (optional)</Label>
+                        <Input id="donor-pan" autoCapitalize="characters" maxLength={20} value={pan} onChange={(event) => setPan(event.target.value.toUpperCase())} />
+                      </div>
+                    </div>
+                  </>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="donation-cause">Support a program</Label>
                   <select id="donation-cause" value={cause} onChange={(event) => setCause(event.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">

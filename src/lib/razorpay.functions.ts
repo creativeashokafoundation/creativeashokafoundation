@@ -64,7 +64,6 @@ export const createDonationOrder = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("donations").insert({
       id: donationId,
-      donor_name: data.donorName,
       email: data.isAnonymous ? `anonymous+${donationId}@donations.invalid` : data.email,
       phone: data.isAnonymous ? null : data.phone || null,
       amount: data.amount,
