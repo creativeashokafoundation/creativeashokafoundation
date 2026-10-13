@@ -2,12 +2,19 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 const donationInput = z.object({
-  donorName: z.string().trim().min(1).max(200),
-  email: z.string().trim().email().max(320),
+  donorName: z.string().trim().max(200).optional().default(""),
+  email: z.string().trim().max(320).optional().default(""),
   phone: z.string().trim().max(40).optional().default(""),
   amount: z.number().int().min(1).max(1_000_000),
   cause: z.string().trim().max(120).optional().default("General donation"),
   pan: z.string().trim().max(20).optional().default(""),
+  isAnonymous: z.boolean().default(false),
+}).superRefine((input, context) => {
+  if (input.isAnonymous) return;
+  if (!input.donorName.trim()) context.addIssue({ code: "custom", path: ["donorName"], message: "Name is required." });
+  if (!z.string().email().safeParse(input.email).success) {
+    context.addIssue({ code: "custom", path: ["email"], message: "A valid email is required." });
+  }
 });
 
 const paymentInput = z.object({
@@ -17,13 +24,6 @@ const paymentInput = z.object({
   signature: z.string().regex(/^[a-f\d]{64}$/i),
 });
 
-function getRazorpayConfig() {
-  const keyId = process.env["RAZORPAY_KEY_ID"];
-  const keySecret = process.env["RAZORPAY_KEY_SECRET"];
-  if (!keyId || !keySecret) throw new Error("Razorpay is not configured yet.");
-  return { keyId, keySecret };
-}
-
 function razorpayAuth(keyId: string, keySecret: string) {
   return `Basic ${btoa(`${keyId}:${keySecret}`)}`;
 }
@@ -31,7 +31,9 @@ function razorpayAuth(keyId: string, keySecret: string) {
 export const createDonationOrder = createServerFn({ method: "POST" })
   .inputValidator((input) => donationInput.parse(input))
   .handler(async ({ data }) => {
-    const { keyId, keySecret } = getRazorpayConfig();
+    const keyId = process.env["RAZORPAY_KEY_ID"];
+    const keySecret = process.env["RAZORPAY_KEY_SECRET"];
+    if (!keyId || !keySecret) throw new Error("Razorpay is not configured yet.");
     const donationId = crypto.randomUUID();
     let orderResponse: Response;
 
@@ -63,14 +65,16 @@ export const createDonationOrder = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("donations").insert({
       id: donationId,
       donor_name: data.donorName,
-      email: data.email,
-      phone: data.phone || null,
+      email: data.isAnonymous ? `anonymous+${donationId}@donations.invalid` : data.email,
+      phone: data.isAnonymous ? null : data.phone || null,
       amount: data.amount,
       cause: data.cause || "General donation",
-      pan: data.pan || null,
+      pan: data.isAnonymous ? null : data.pan || null,
       payment_method: "razorpay",
       status: "pending",
       reference_id: order.id,
+      is_anonymous: data.isAnonymous,
+      donor_name: data.isAnonymous ? "Anonymous" : data.donorName,
     });
 
     if (error) throw new Error("Could not save your donation. Please try again.");
@@ -81,16 +85,18 @@ export const createDonationOrder = createServerFn({ method: "POST" })
       amount: order.amount,
       currency: order.currency,
       keyId,
-      donorName: data.donorName,
-      email: data.email,
-      phone: data.phone,
+      donorName: data.isAnonymous ? "" : data.donorName,
+      email: data.isAnonymous ? "" : data.email,
+      phone: data.isAnonymous ? "" : data.phone,
     };
   });
 
 export const verifyDonationPayment = createServerFn({ method: "POST" })
   .inputValidator((input) => paymentInput.parse(input))
   .handler(async ({ data }) => {
-    const { keyId, keySecret } = getRazorpayConfig();
+    const keyId = process.env["RAZORPAY_KEY_ID"];
+    const keySecret = process.env["RAZORPAY_KEY_SECRET"];
+    if (!keyId || !keySecret) throw new Error("Razorpay is not configured yet.");
     const encoder = new TextEncoder();
     const hmacKey = await crypto.subtle.importKey(
       "raw",
