@@ -1,2 +1,2 @@
-- [ ] Add Razorpay checkout and server-side order/payment verification to the donation page.
-- [ ] Configure Razorpay credentials securely and verify a complete checkout.
+- [x] Make the donation page Razorpay-only and add verified online checkout.
+- [ ] Add Razorpay credentials securely and verify a complete checkout (waiting for credential entry).

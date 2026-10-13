@@ -7,8 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createDonationOrder, verifyDonationPayment } from "@/lib/razorpay.functions";
 import { toast } from "sonner";
-import { Building2, QrCode, Copy, Heart, LockKeyhole } from "lucide-react";
-const qrAsset = { url: "/images/caf-upi-qr.jpeg" };
+import { Heart, LockKeyhole } from "lucide-react";
 
 type CheckoutSuccess = { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string };
 type CheckoutFailure = { error?: { description?: string } };
@@ -39,7 +38,7 @@ export const Route = createFileRoute("/donate")({
   head: () => ({
     meta: [
       { title: "Donate — Creative Ashoka Foundation" },
-      { name: "description", content: "Donate securely through Razorpay, UPI QR code, or bank transfer. Support Creative Ashoka Foundation's on-ground programs." },
+      { name: "description", content: "Donate securely through Razorpay. Support Creative Ashoka Foundation's on-ground programs." },
       { property: "og:title", content: "Donate to Creative Ashoka Foundation" },
       { property: "og:description", content: "Your contribution funds meals, scholarships and lifesaving care. 80G certified." },
       { property: "og:type", content: "website" },
@@ -60,8 +59,6 @@ function Donate() {
   const [cause, setCause] = useState("General donation");
   const [isPaying, setIsPaying] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
-
-  const copy = (t: string) => { navigator.clipboard.writeText(t); toast.success("Copied"); };
 
   const loadCheckout = async () => {
     if (window.Razorpay) return;
@@ -139,7 +136,7 @@ function Donate() {
       <PageHero eyebrow="Donate" title="Fund real change — transparently." subtitle="Every contribution is acknowledged with an 80G tax-exemption receipt. Funds are deployed within 30 days and reported publicly." />
 
       <section className="section-y">
-        <div className="container-page grid gap-10 lg:grid-cols-2">
+        <div className="container-page max-w-2xl">
           <div className="rounded-3xl border border-border bg-card p-6 shadow-soft md:p-8">
             <div className="flex items-center gap-2 text-accent">
               <Heart className="h-5 w-5" />
@@ -208,42 +205,6 @@ function Donate() {
             )}
           </div>
 
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-soft md:p-8">
-            <div className="flex items-center gap-2 text-accent">
-              <Building2 className="h-5 w-5" />
-              <h3 className="font-display font-semibold text-primary">Bank Transfer</h3>
-            </div>
-            <dl className="mt-4 space-y-2 text-sm">
-              {[
-                ["Account Name", "Creative Ashoka Foundation"],
-                ["Bank Name", "Axis Bank"],
-                ["Account Number", "925020022668565"],
-                ["IFSC Code", "UTIB0005205"],
-                ["Branch", "Purani Bazar Basti"],
-              ].map(([k, v]) => (
-                <div key={k} className="flex items-center justify-between gap-3 rounded-md bg-secondary/60 px-3 py-2">
-                  <div>
-                    <dt className="text-[10px] uppercase tracking-wider text-muted-foreground">{k}</dt>
-                    <dd className="font-medium text-foreground">{v}</dd>
-                  </div>
-                  <button onClick={() => copy(v)} className="rounded-md p-2 text-muted-foreground hover:text-accent" aria-label={`Copy ${k}`}>
-                    <Copy className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </dl>
-          </div>
-
-          <div className="rounded-3xl border border-border bg-card p-6 text-center shadow-soft md:p-8">
-            <div className="flex items-center justify-center gap-2 text-accent">
-              <QrCode className="h-5 w-5" />
-              <h3 className="font-display font-semibold text-primary">Scan QR</h3>
-            </div>
-            <div className="mx-auto mt-4 h-48 w-48 overflow-hidden rounded-md border border-border bg-white p-2">
-              <img src={qrAsset.url} alt="Creative Ashoka Foundation UPI QR code" className="h-full w-full object-contain" />
-            </div>
-            <p className="mt-3 text-sm text-muted-foreground">Scan this code with any UPI app to donate instantly.</p>
-          </div>
         </div>
       </section>
 
