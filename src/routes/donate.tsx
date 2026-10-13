@@ -39,7 +39,7 @@ export const Route = createFileRoute("/donate")({
   head: () => ({
     meta: [
       { title: "Donate — Creative Ashoka Foundation" },
-      { name: "description", content: "Donate via bank transfer or QR code. 80G tax-exempt. 100% of your contribution funds on-ground programs." },
+      { name: "description", content: "Donate securely through Razorpay, UPI QR code, or bank transfer. Support Creative Ashoka Foundation's on-ground programs." },
       { property: "og:title", content: "Donate to Creative Ashoka Foundation" },
       { property: "og:description", content: "Your contribution funds meals, scholarships and lifesaving care. 80G certified." },
       { property: "og:type", content: "website" },
