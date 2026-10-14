@@ -143,7 +143,7 @@ export const verifyDonationPayment = createServerFn({ method: "POST" })
       .eq("id", data.donationId)
       .maybeSingle();
 
-    if (error || !donation || donation.amount !== payment.amount / 100) {
+    if (error || !donation || payment.amount == null || donation.amount !== payment.amount / 100) {
       throw new Error("Payment could not be matched to your donation. Please contact us for help.");
     }
     if (donation.status === "completed" && donation.reference_id === data.paymentId) {
