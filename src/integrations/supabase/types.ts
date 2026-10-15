@@ -103,8 +103,11 @@ export type Database = {
       }
       donations: {
         Row: {
+          address: string | null
           amount: number
           cause: string | null
+          certificate_issued_at: string | null
+          certificate_number: string | null
           created_at: string
           donor_name: string
           email: string
@@ -114,13 +117,17 @@ export type Database = {
           pan: string | null
           payment_method: string | null
           phone: string | null
+          receipt_email_status: string
           reference_id: string | null
           status: string | null
           updated_at: string
         }
         Insert: {
+          address?: string | null
           amount: number
           cause?: string | null
+          certificate_issued_at?: string | null
+          certificate_number?: string | null
           created_at?: string
           donor_name: string
           email: string
@@ -130,13 +137,17 @@ export type Database = {
           pan?: string | null
           payment_method?: string | null
           phone?: string | null
+          receipt_email_status?: string
           reference_id?: string | null
           status?: string | null
           updated_at?: string
         }
         Update: {
+          address?: string | null
           amount?: number
           cause?: string | null
+          certificate_issued_at?: string | null
+          certificate_number?: string | null
           created_at?: string
           donor_name?: string
           email?: string
@@ -146,6 +157,7 @@ export type Database = {
           pan?: string | null
           payment_method?: string | null
           phone?: string | null
+          receipt_email_status?: string
           reference_id?: string | null
           status?: string | null
           updated_at?: string
@@ -439,7 +451,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      next_donation_certificate_number: { Args: never; Returns: string }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
