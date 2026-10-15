@@ -57,6 +57,7 @@ function Donate() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [pan, setPan] = useState("");
+  const [address, setAddress] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [cause, setCause] = useState("General donation");
   const [isPaying, setIsPaying] = useState(false);
@@ -92,6 +93,7 @@ function Donate() {
         amount: parsedAmount,
         cause,
         pan,
+        address,
         isAnonymous,
       } });
       if (!window.Razorpay) throw new Error("Secure payment checkout is unavailable. Please try again.");
@@ -180,6 +182,7 @@ function Donate() {
                         setEmail("");
                         setPhone("");
                         setPan("");
+                        setAddress("");
                       }
                     }}
                   />
@@ -210,6 +213,11 @@ function Donate() {
                         <Input id="donor-pan" autoCapitalize="characters" maxLength={20} value={pan} onChange={(event) => setPan(event.target.value.toUpperCase())} />
                       </div>
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="donor-address">Address (for tax certificate, optional)</Label>
+                      <Input id="donor-address" autoComplete="street-address" maxLength={500} value={address} onChange={(event) => setAddress(event.target.value)} />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Add your PAN and address to receive a donation certificate under the Income Tax Act, emailed from donations@creativeashoka.org.</p>
                   </>
                 )}
                 <div className="space-y-2">

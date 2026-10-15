@@ -8,6 +8,7 @@ const donationInput = z.object({
   amount: z.number().int().min(1).max(1_000_000),
   cause: z.string().trim().max(120).optional().default("General donation"),
   pan: z.string().trim().max(20).optional().default(""),
+  address: z.string().trim().max(500).optional().default(""),
   isAnonymous: z.boolean().default(false),
 }).superRefine((input, context) => {
   if (input.isAnonymous) return;
@@ -69,12 +70,13 @@ export const createDonationOrder = createServerFn({ method: "POST" })
       amount: data.amount,
       cause: data.cause || "General donation",
       pan: data.isAnonymous ? null : data.pan || null,
+      address: data.isAnonymous ? null : data.address || null,
       payment_method: "razorpay",
       status: "pending",
       reference_id: order.id,
       is_anonymous: data.isAnonymous,
       donor_name: data.isAnonymous ? "Anonymous" : data.donorName,
-    });
+    } as never);
 
     if (error) throw new Error("Could not save your donation. Please try again.");
 
@@ -163,5 +165,7 @@ export const verifyDonationPayment = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (updateError || !updated) throw new Error("Payment could not be recorded. Please contact us for help.");
+    const { issueDonationCertificate } = await import("./donation-certificate.server");
+    await issueDonationCertificate(supabaseAdmin, data.donationId);
     return { verified: true };
   });
