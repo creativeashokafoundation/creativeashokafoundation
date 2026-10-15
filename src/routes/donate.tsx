@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createDonationOrder, verifyDonationPayment } from "@/lib/razorpay.functions";
 import { toast } from "sonner";
-import { Heart, LockKeyhole } from "lucide-react";
+import { CheckCircle2, Heart, LockKeyhole, RotateCcw } from "lucide-react";
 
 type CheckoutSuccess = { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string };
 type CheckoutFailure = { error?: { description?: string } };
@@ -61,7 +61,12 @@ function Donate() {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [cause, setCause] = useState("General donation");
   const [isPaying, setIsPaying] = useState(false);
-  const [paymentComplete, setPaymentComplete] = useState(false);
+  const [confirmedDonation, setConfirmedDonation] = useState<{
+    amount: number;
+    cause: string;
+    isAnonymous: boolean;
+    email: string;
+  } | null>(null);
 
   const loadCheckout = async () => {
     if (window.Razorpay) return;
@@ -116,7 +121,7 @@ function Donate() {
               paymentId: response.razorpay_payment_id,
               signature: response.razorpay_signature,
             } });
-            setPaymentComplete(true);
+            setConfirmedDonation({ amount: parsedAmount, cause, isAnonymous, email });
             toast.success("Thank you — your donation was confirmed.");
           } catch (error) {
             toast.error(error instanceof Error ? error.message : "Payment verification failed. Please contact us.");
@@ -138,22 +143,55 @@ function Donate() {
 
   return (
     <>
-      <PageHero eyebrow="Donate" title="Fund real change — transparently." subtitle="Every contribution is acknowledged with an 80G tax-exemption receipt. Funds are deployed within 30 days and reported publicly." />
+      <PageHero
+        eyebrow={confirmedDonation ? "Donation successful" : "Donate"}
+        title={confirmedDonation ? "Your donation is confirmed." : "Fund real change — transparently."}
+        subtitle={confirmedDonation ? "Thank you for helping Creative Ashoka Foundation support its on-ground programs." : "Every contribution is acknowledged with an 80G tax-exemption receipt. Funds are deployed within 30 days and reported publicly."}
+      />
 
       <section className="section-y">
         <div className="container-page max-w-2xl">
+          {confirmedDonation ? (
+            <div className="mx-auto max-w-xl text-center" role="status" aria-live="polite">
+              <CheckCircle2 className="mx-auto h-14 w-14 text-accent" aria-hidden="true" />
+              <h2 className="mt-5 font-display text-2xl font-bold text-primary">Thank you for your generosity.</h2>
+              <p className="mt-2 text-muted-foreground">Your payment has been verified securely by Razorpay.</p>
+
+              <dl className="mx-auto mt-8 grid max-w-md gap-4 border-y border-border py-5 text-left sm:grid-cols-2">
+                <div>
+                  <dt className="text-sm text-muted-foreground">Donation amount</dt>
+                  <dd className="mt-1 font-display text-xl font-semibold text-primary">₹{confirmedDonation.amount.toLocaleString("en-IN")}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Supporting</dt>
+                  <dd className="mt-1 font-medium text-primary">{confirmedDonation.cause}</dd>
+                </div>
+                {!confirmedDonation.isAnonymous && (
+                  <div className="sm:col-span-2">
+                    <dt className="text-sm text-muted-foreground">Certificate email</dt>
+                    <dd className="mt-1 break-all font-medium text-primary">{confirmedDonation.email}</dd>
+                  </div>
+                )}
+              </dl>
+
+              <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
+                {confirmedDonation.isAnonymous
+                  ? "Because this donation is anonymous, we don’t have an email address to send a Section 354(4) certificate to."
+                  : "Your Section 354(4) donation certificate will be emailed once its official details are finalized."}
+              </p>
+
+              <Button type="button" variant="outline" className="mt-8" onClick={() => setConfirmedDonation(null)}>
+                <RotateCcw className="h-4 w-4" />
+                Make another donation
+              </Button>
+            </div>
+          ) : (
           <div className="rounded-3xl border border-border bg-card p-6 shadow-soft md:p-8">
             <div className="flex items-center gap-2 text-accent">
               <Heart className="h-5 w-5" />
               <h3 className="font-display font-semibold text-primary">Donate securely</h3>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">Choose an amount and make your contribution through Razorpay.</p>
-            {paymentComplete ? (
-              <div className="mt-6 border-l-2 border-accent py-2 pl-4" role="status">
-                <p className="font-semibold text-primary">Thank you for your generosity.</p>
-                <p className="mt-1 text-sm text-muted-foreground">Your payment is confirmed. Your contribution supports our on-ground programs.</p>
-              </div>
-            ) : (
               <form className="mt-6 space-y-5" onSubmit={handleDonate}>
                 <fieldset>
                   <legend className="mb-2 text-sm font-medium">Choose an amount</legend>
@@ -237,13 +275,13 @@ function Donate() {
                 </Button>
                 <p className="text-center text-xs text-muted-foreground">Your payment is processed securely by Razorpay.</p>
               </form>
-            )}
           </div>
+          )}
 
         </div>
       </section>
 
-      <section className="bg-[color:var(--cream)] section-y">
+      {!confirmedDonation && <section className="bg-[color:var(--cream)] section-y">
         <div className="container-page">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Donation Transparency</p>
@@ -263,7 +301,7 @@ function Donate() {
             ))}
           </div>
         </div>
-      </section>
+      </section>}
     </>
   );
 }
