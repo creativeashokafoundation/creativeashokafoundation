@@ -1,4 +1,6 @@
 - [x] Make the donation page Razorpay-only and add verified online checkout.
 - [x] Add an anonymous-donation checkbox and keep donor identity private in the donation record.
 - [x] Show a dedicated donation confirmation view after payment verification, including certificate-email status.
+- [ ] Add an instant downloadable PDF payment acknowledgement on the verified donation confirmation screen.
+- [ ] Add an app email containing a secure receipt download link after email sending is configured; direct PDF attachments are not supported.
 - [ ] Add Razorpay credentials securely and verify a complete checkout (waiting for credential entry).
